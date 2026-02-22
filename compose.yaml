@@ -1,0 +1,46 @@
+services:
+  postgre:
+    container_name: kube_news_db
+    image: postgres:${POSTGRES_TAG}
+    ports:
+      - 5432:5432
+    # profiles:
+    #   - dev
+    #   - homolog
+    environment:
+      POSTGRES_PASSWORD: pg123
+      POSTGRES_USER: kubenews
+      POSTGRES_DB: kubenews
+    volumes:
+      - kube_news_vol:/var/lib/postgresql
+    networks:
+      - kube_news_net
+  
+  kube_news:
+    container_name: kube_news_app
+    image: vinicius88/kube-news:${KUBE_NEWS_TAG:-latest}
+    ports:
+      - 8080:8080
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: postgre
+      DB_DATABASE: kubenews
+      DB_USERNAME: kubenews
+      DB_PASSWORD: pg123
+    networks:
+      - kube_news_net
+    depends_on:
+      - postgre
+
+
+volumes:
+  kube_news_vol:
+    name: kube_news_vol
+    external: true
+
+networks:
+  kube_news_net:
+    name: kube_news_net
+    driver: bridge
